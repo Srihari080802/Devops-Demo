@@ -92,11 +92,11 @@ resource "aws_security_group" "private_sg" {
 resource "aws_launch_template" "public_instance" {
   name          = "public-instance-template"
   instance_type = "t2.micro"
-  ami           = "ami-055e3d4f0bbeb5878" # Amazon Linux 2 AMI
+  image_id      = "ami-055e3d4f0bbeb5878" # Amazon Linux 2 AMI
   iam_instance_profile {
     name = aws_iam_instance_profile.public_role.name
   }
-  security_group_ids = [aws_security_group.public_sg.id]
+  vpc_security_group_ids = [aws_security_group.public_sg.id]
 }
 
 resource "aws_autoscaling_group" "public_asg" {
@@ -204,4 +204,3 @@ resource "aws_iam_role_policy_attachment" "attach_policy" {
 resource "aws_iam_instance_profile" "public_role" {
   name = "public-instance-profile"
   role = aws_iam_role.public_role.name
-}
