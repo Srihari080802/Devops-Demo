@@ -204,3 +204,4 @@ resource "aws_iam_role_policy_attachment" "attach_policy" {
 resource "aws_iam_instance_profile" "public_role" {
   name = "public-instance-profile"
   role = aws_iam_role.public_role.name
+}
