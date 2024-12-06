@@ -1,4 +1,4 @@
-
+# Provider Configuration
 provider "aws" {
   region = "us-west-2"
 }
@@ -111,10 +111,10 @@ resource "aws_autoscaling_group" "public_asg" {
 }
 
 resource "aws_instance" "private_instance" {
-  ami           = "ami-055e3d4f0bbeb5878"
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.private[0].id
-  security_groups = [aws_security_group.private_sg.name]
+  ami                    = "ami-055e3d4f0bbeb5878"
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.private[0].id
+  vpc_security_group_ids = [aws_security_group.private_sg.id]
 }
 
 # Load Balancers
@@ -159,7 +159,7 @@ resource "aws_lb_target_group" "network_targets" {
 
 # S3 Bucket
 resource "aws_s3_bucket" "private_bucket" {
-  bucket = "private-bucket-srihari"
+  bucket = "private-bucket-srihari-unique"
   acl    = "private"
   versioning {
     enabled = true
