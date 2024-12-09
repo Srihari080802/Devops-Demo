@@ -193,12 +193,6 @@ resource "aws_s3_bucket" "srihari_private_bucket" {
   bucket = "srihari-private-bucket"
 }
 
-# S3 Bucket ACL
-resource "aws_s3_bucket_acl" "srihari_private_bucket_acl" {
-  bucket = aws_s3_bucket.srihari_private_bucket.id
-  acl    = "private"
-}
-
 # S3 Bucket Versioning
 resource "aws_s3_bucket_versioning" "srihari_private_bucket_versioning" {
   bucket = aws_s3_bucket.srihari_private_bucket.bucket
@@ -225,7 +219,7 @@ resource "aws_iam_role" "srihari_public_role" {
 
 # IAM Policy for S3 Access
 resource "aws_iam_policy" "srihari_s3_access" {
-  name        = "srihari-s3-access"
+  name        = "srihari-s3-access-unique"
   description = "Full access to the S3 bucket"
   policy      = jsonencode({
     Version = "2012-10-17",
@@ -247,6 +241,6 @@ resource "aws_iam_role_policy_attachment" "srihari_attach_policy" {
 
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "srihari_public_role" {
-  name = "srihari-public-instance-profile"
+  name = "srihari-public-instance-profile-unique"
   role = aws_iam_role.srihari_public_role.name
 }
