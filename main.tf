@@ -158,6 +158,16 @@ resource "aws_lb_target_group" "srihari_network_targets" {
   vpc_id   = aws_vpc.main.id
 }
 
+resource "aws_lb_listener" "srihari_net_listener" {
+  load_balancer_arn = aws_lb.srihari_network.arn
+  port              = 80
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.srihari_network_targets.arn
+  }
+}
+
 # S3 Bucket
 resource "aws_s3_bucket" "srihari_private_bucket" {
   bucket = "srihari-private-bucket"
