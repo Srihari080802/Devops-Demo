@@ -3,11 +3,12 @@ provider "aws" {
   region = "us-west-2"
 }
 
-# VPC and Subnets
+# VPC Creation
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 }
 
+# Public Subnet Creation
 resource "aws_subnet" "public" {
   count = 2
   vpc_id                  = aws_vpc.main.id
@@ -16,6 +17,7 @@ resource "aws_subnet" "public" {
   availability_zone       = ["us-west-2a", "us-west-2b"][count.index]
 }
 
+# Private Subnet Creation
 resource "aws_subnet" "private" {
   count = 2
   vpc_id            = aws_vpc.main.id
@@ -23,7 +25,7 @@ resource "aws_subnet" "private" {
   availability_zone = ["us-west-2a", "us-west-2b"][count.index]
 }
 
-# Internet Gateway
+# Internet Gateway Creation
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 }
@@ -38,13 +40,14 @@ resource "aws_route_table" "public" {
   }
 }
 
+# Route Table Association for Public Subnet
 resource "aws_route_table_association" "public" {
   count          = 2
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
-# Security Groups
+# Security Group for Public Subnet
 resource "aws_security_group" "srihari_public_sg" {
   vpc_id = aws_vpc.main.id
 
@@ -70,6 +73,7 @@ resource "aws_security_group" "srihari_public_sg" {
   }
 }
 
+# Security Group for Private Subnet
 resource "aws_security_group" "srihari_private_sg" {
   vpc_id = aws_vpc.main.id
 
@@ -88,17 +92,18 @@ resource "aws_security_group" "srihari_private_sg" {
   }
 }
 
-# EC2 Instances and ASG
+# Launch Template for Public EC2 Instances
 resource "aws_launch_template" "srihari_public_instance" {
   name          = "srihari-public-instance-template"
   instance_type = "t2.micro"
-  image_id      = "ami-055e3d4f0bbeb5878" # Amazon Linux 2 AMI
+  image_id      = "ami-055e3d4f0bbeb5878" 
   iam_instance_profile {
     name = aws_iam_instance_profile.srihari_public_role.name
   }
   vpc_security_group_ids = [aws_security_group.srihari_public_sg.id]
 }
 
+# Auto Scaling Group for Public EC2 Instances
 resource "aws_autoscaling_group" "srihari_public_asg" {
   desired_capacity    = 2
   max_size            = 3
@@ -111,6 +116,7 @@ resource "aws_autoscaling_group" "srihari_public_asg" {
   target_group_arns = [aws_lb_target_group.srihari_app_targets.arn]
 }
 
+# Private EC2 Instance
 resource "aws_instance" "srihari_private_instance" {
   ami                    = "ami-055e3d4f0bbeb5878"
   instance_type          = "t2.micro"
@@ -118,8 +124,8 @@ resource "aws_instance" "srihari_private_instance" {
   vpc_security_group_ids = [aws_security_group.srihari_private_sg.id]
 }
 
-# Load Balancers
-resource "aws_lb" "srihari_application" {
+# Application Load Balancer
+resource "aws_lb" "srihari_application_lb" {
   name               = "srihari-app-lb"
   internal           = false
   load_balancer_type = "application"
@@ -127,6 +133,7 @@ resource "aws_lb" "srihari_application" {
   subnets            = aws_subnet.public[*].id
 }
 
+# Target Group for Application Load Balancer
 resource "aws_lb_target_group" "srihari_app_targets" {
   name     = "srihari-app-targets"
   port     = 80
@@ -134,6 +141,7 @@ resource "aws_lb_target_group" "srihari_app_targets" {
   vpc_id   = aws_vpc.main.id
 }
 
+# Listener for Application Load Balancer
 resource "aws_lb_listener" "srihari_app_listener" {
   load_balancer_arn = aws_lb.srihari_application.arn
   port              = 80
@@ -144,13 +152,15 @@ resource "aws_lb_listener" "srihari_app_listener" {
   }
 }
 
-resource "aws_lb" "srihari_network" {
+# Network Load Balancer
+resource "aws_lb" "srihari_network_lb" {
   name               = "srihari-net-lb"
   internal           = true
   load_balancer_type = "network"
   subnets            = aws_subnet.private[*].id
 }
 
+# Target Group for Network Load Balancer
 resource "aws_lb_target_group" "srihari_network_targets" {
   name     = "srihari-net-targets"
   port     = 80
@@ -158,6 +168,7 @@ resource "aws_lb_target_group" "srihari_network_targets" {
   vpc_id   = aws_vpc.main.id
 }
 
+# Listener for Network Load Balancer
 resource "aws_lb_listener" "srihari_net_listener" {
   load_balancer_arn = aws_lb.srihari_network.arn
   port              = 80
@@ -174,6 +185,7 @@ resource "aws_s3_bucket" "srihari_private_bucket" {
   acl    = "private"
 }
 
+# S3 Bucket Versioning
 resource "aws_s3_bucket_versioning" "srihari_private_bucket_versioning" {
   bucket = aws_s3_bucket.srihari_private_bucket.bucket
 
@@ -197,6 +209,7 @@ resource "aws_iam_role" "srihari_public_role" {
   })
 }
 
+# IAM Policy for S3 Access
 resource "aws_iam_policy" "srihari_s3_access" {
   name        = "srihari-s3-access"
   description = "Full access to the S3 bucket"
@@ -212,11 +225,13 @@ resource "aws_iam_policy" "srihari_s3_access" {
   })
 }
 
+# Attach IAM Policy to Role
 resource "aws_iam_role_policy_attachment" "srihari_attach_policy" {
   role       = aws_iam_role.srihari_public_role.name
   policy_arn = aws_iam_policy.srihari_s3_access.arn
 }
 
+# IAM Instance Profile
 resource "aws_iam_instance_profile" "srihari_public_role" {
   name = "srihari-public-instance-profile"
   role = aws_iam_role.srihari_public_role.name
