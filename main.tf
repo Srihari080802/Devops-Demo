@@ -108,7 +108,10 @@ resource "aws_autoscaling_group" "srihari_public_asg" {
   desired_capacity    = 2
   max_size            = 3
   min_size            = 1
-  vpc_zone_identifier = aws_subnet.public[*].id
+  vpc_zone_identifier = [
+    aws_subnet.public[0].id,
+    aws_subnet.public[1].id
+  ]
   launch_template {
     id      = aws_launch_template.srihari_public_instance.id
     version = "$Latest"
@@ -130,7 +133,10 @@ resource "aws_lb" "srihari_application_lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.srihari_public_sg.id]
-  subnets            = aws_subnet.public[*].id
+  subnets            = [
+    aws_subnet.public[0].id,
+    aws_subnet.public[1].id
+  ]
 }
 
 # Target Group for Application Load Balancer
@@ -143,7 +149,7 @@ resource "aws_lb_target_group" "srihari_app_targets" {
 
 # Listener for Application Load Balancer
 resource "aws_lb_listener" "srihari_app_listener" {
-  load_balancer_arn = aws_lb.srihari_application.arn
+  load_balancer_arn = aws_lb.srihari_application_lb.arn
   port              = 80
   protocol          = "HTTP"
   default_action {
@@ -157,7 +163,10 @@ resource "aws_lb" "srihari_network_lb" {
   name               = "srihari-net-lb"
   internal           = true
   load_balancer_type = "network"
-  subnets            = aws_subnet.private[*].id
+  subnets            = [
+    aws_subnet.private[0].id,
+    aws_subnet.private[1].id
+  ]
 }
 
 # Target Group for Network Load Balancer
@@ -170,7 +179,7 @@ resource "aws_lb_target_group" "srihari_network_targets" {
 
 # Listener for Network Load Balancer
 resource "aws_lb_listener" "srihari_net_listener" {
-  load_balancer_arn = aws_lb.srihari_network.arn
+  load_balancer_arn = aws_lb.srihari_network_lb.arn
   port              = 80
   protocol          = "TCP"
   default_action {
@@ -182,6 +191,11 @@ resource "aws_lb_listener" "srihari_net_listener" {
 # S3 Bucket
 resource "aws_s3_bucket" "srihari_private_bucket" {
   bucket = "srihari-private-bucket"
+}
+
+# S3 Bucket ACL
+resource "aws_s3_bucket_acl" "srihari_private_bucket_acl" {
+  bucket = aws_s3_bucket.srihari_private_bucket.id
   acl    = "private"
 }
 
