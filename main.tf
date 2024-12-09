@@ -172,8 +172,13 @@ resource "aws_lb_listener" "srihari_net_listener" {
 resource "aws_s3_bucket" "srihari_private_bucket" {
   bucket = "srihari-private-bucket"
   acl    = "private"
-  versioning {
-    enabled = true
+}
+
+resource "aws_s3_bucket_versioning" "srihari_private_bucket_versioning" {
+  bucket = aws_s3_bucket.srihari_private_bucket.bucket
+
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
