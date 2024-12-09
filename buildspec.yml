@@ -2,6 +2,8 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      terraform: 0.14
     commands:
       - echo Installing Terraform
       - curl -O https://releases.hashicorp.com/terraform/0.14.0/terraform_0.14.0_linux_amd64.zip
@@ -20,6 +22,10 @@ phases:
       - terraform plan -out=tfplan
       - echo Applying Terraform Deployment
       - terraform apply -auto-approve tfplan
+      - echo Applying Sleep
+      - sleep 300
+      - echo Applying Terraform Destroy
+      - terraform destory -auto-approve tfplan
 artifacts:
   files:
     - '**/*'
